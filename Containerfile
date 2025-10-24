@@ -47,10 +47,10 @@ RUN rpm-ostree install \
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/branding.sh
 
-### Custom Default Wallpaper
-# Directly overwrite Fedora's default wallpapers with ClarityOS wallpapers
-COPY build_files/wallpapers/default.jxl /usr/share/backgrounds/default.jxl
-COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/default-dark.jxl
+### Custom Default Wallpaper - Dark wallpaper for both themes
+# Use dark wallpaper for both day and night since COSMIC doesn't switch automatically
+COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-day.jxl
+COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-night.jxl
 
 ### [IM]MUTABLE /opt
 # RUN rm /opt && mkdir /opt
