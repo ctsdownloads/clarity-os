@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '05 10 * * *'  # 10:05am UTC everyday
+    - cron: '05 10 * * *'
   push:
     branches:
       - main
@@ -19,6 +19,7 @@ env:
   IMAGE_LOGO_URL: "https://avatars.githubusercontent.com/u/120078124?s=200&v=4"
   IMAGE_NAME: "${{ github.event.repository.name }}"
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
+  DEFAULT_TAG: "latest"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -26,12 +27,8 @@ concurrency:
 
 jobs:
   build_push:
-    name: Build and push image (${{ matrix.kernel-variant }})
+    name: Build and push image
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        kernel-variant: ["latest", "gts"]
 
     permissions:
       contents: read
@@ -41,10 +38,8 @@ jobs:
     steps:
       - name: Prepare environment
         run: |
-          # Lowercase the image uri
           echo "IMAGE_REGISTRY=${IMAGE_REGISTRY,,}" >> ${GITHUB_ENV}
           echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
-          echo "KERNEL_VARIANT=${{ matrix.kernel-variant }}" >> ${GITHUB_ENV}
 
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -67,8 +62,11 @@ jobs:
         id: metadata
         with:
           tags: |
-            type=raw,value=${{ matrix.kernel-variant }}
-            type=raw,value=${{ matrix.kernel-variant }}-{{date 'YYYYMMDD'}}
+            type=raw,value=${{ env.DEFAULT_TAG }}
+            type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            type=raw,value={{date 'YYYYMMDD'}}
+            type=sha,enable=${{ github.event_name == 'pull_request' }}
+            type=ref,event=pr
           labels: |
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/main/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
@@ -78,14 +76,13 @@ jobs:
             org.opencontainers.image.title=${{ env.IMAGE_NAME }}
             org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
-            org.opencontainers.image.version=${{ matrix.kernel-variant }}-{{date 'YYYYMMDD'}}
+            org.opencontainers.image.version=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
             io.artifacthub.package.deprecated=false
             io.artifacthub.package.keywords=${{ env.IMAGE_KEYWORDS }}
             io.artifacthub.package.license=Apache-2.0
             io.artifacthub.package.logo-url=${{ env.IMAGE_LOGO_URL }}
             io.artifacthub.package.prerelease=false
             containers.bootc=1
-            clarity-os.kernel-variant=${{ matrix.kernel-variant }}
           sep-tags: " "
           sep-annotations: " "
 
@@ -98,8 +95,6 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          build-args: |
-            KERNEL_VARIANT=${{ matrix.kernel-variant }}
           oci: false
 
       - name: Login to GitHub Container Registry
