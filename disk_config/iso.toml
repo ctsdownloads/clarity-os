@@ -10,7 +10,7 @@ unattended = false
 [customizations.installer.kickstart]
 contents = """
 %post
-bootc switch --mutate-in-place --transport registry ghcr.io/ctsdownloads/clarity-os:latest
+bootc switch --mutate-in-place --transport registry --no-signature-verification ghcr.io/ctsdownloads/clarity-os:latest
 %end
 """
 
