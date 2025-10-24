@@ -12,26 +12,7 @@ RUN mkdir -p /etc/containers/registries.d && \
     > /etc/containers/registries.d/ghcr-ctsdownloads.yaml
 
 ### Configure bootc to verify signatures automatically for updates
-RUN mkdir -p /etc/containers
-
-RUN cat > /etc/containers/policy.json << 'EOF'
-{
-  "default": [{"type": "reject"}],
-  "transports": {
-    "docker": {
-      "ghcr.io/ctsdownloads/clarity-os": [
-        {
-          "type": "sigstoreSigned",
-          "keyPath": "/etc/pki/containers/clarity-os.pub"
-        }
-      ]
-    },
-    "docker-daemon": {
-      "": [{"type": "insecureAcceptAnything"}]
-    }
-  }
-}
-EOF
+COPY build_files/policy.json /etc/containers/policy.json
 
 ### COSMIC Desktop Installation
 ## base-main doesn't have Fedora repos enabled by default
