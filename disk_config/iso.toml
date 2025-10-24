@@ -6,7 +6,6 @@ installation_device = "/dev/vda"
 
 [customizations.installer]
 unattended = false
-sudo-nopasswd = [ "admin" ]
 
 [customizations.installer.kickstart]
 contents = """
