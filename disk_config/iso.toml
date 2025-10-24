@@ -1,5 +1,4 @@
 name = "clarityos"
-product = "ClarityOS"
 version = "42"
 
 [customizations]
