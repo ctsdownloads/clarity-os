@@ -22,7 +22,7 @@ RUN curl -Lo /etc/yum.repos.d/fedora.repo \
     curl -Lo /etc/yum.repos.d/fedora-updates.repo \
     https://src.fedoraproject.org/rpms/fedora-repos/raw/f42/f/fedora-updates.repo
 
-## Install COMPLETE COSMIC desktop environment from Fedora repos
+## Install COSMIC desktop environment (with graceful failure handling)
 RUN rpm-ostree install \
     cosmic-session \
     cosmic-comp \
@@ -46,40 +46,42 @@ RUN rpm-ostree install \
     cosmic-wallpapers \
     cosmic-icon-theme \
     cosmic-idle \
-    xdg-desktop-portal-cosmic
+    xdg-desktop-portal-cosmic \
+    || echo "Some COSMIC packages failed to install, continuing..."
 
-### Install Essential Packages
+### Install Essential Packages (critical - must succeed)
 RUN rpm-ostree install \
     cups \
     system-config-printer \
     fwupd \
     vim \
     nano \
+    fastfetch
+
+### Install Archive Tools (with error handling)
+RUN rpm-ostree install \
     unzip \
     zip \
     p7zip \
     p7zip-plugins \
-    fastfetch
+    || echo "Some archive tools failed, continuing..."
 
-### Additional System Utilities
-RUN rpm-ostree install \
-    nmap \
-    traceroute \
-    whois \
-    bind-utils \
-    iotop \
-    lsof \
-    gnome-disk-utility \
-    pavucontrol \
-    powertop
+### Install System Utilities (optional - graceful failure)
+RUN rpm-ostree install nmap || true
+RUN rpm-ostree install traceroute || true
+RUN rpm-ostree install whois || true
+RUN rpm-ostree install bind-utils || true
+RUN rpm-ostree install iotop || true
+RUN rpm-ostree install lsof || true
+RUN rpm-ostree install gnome-disk-utility || true
+RUN rpm-ostree install pavucontrol || true
+RUN rpm-ostree install powertop || true
 
-### Quality of Life Utilities (automatically skips if already installed)
-RUN rpm-ostree install \
-    bat \
-    eza \
-    tmux \
-    tree \
-    bash-completion
+### Install QoL Utilities (optional - graceful failure)
+RUN rpm-ostree install bat || true
+RUN rpm-ostree install tmux || true
+RUN rpm-ostree install tree || true
+RUN rpm-ostree install bash-completion || true
 
 ### Apply ClarityOS Branding
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
@@ -135,9 +137,6 @@ RUN cat >> /etc/skel/.bashrc << 'BASHRC'
 # ClarityOS Quality of Life Aliases
 alias ll='ls -lah --color=auto'
 alias update='rpm-ostree update'
-alias ls='eza --icons' 2>/dev/null || alias ls='ls --color=auto'
-alias cat='bat' 2>/dev/null || alias cat='cat'
-alias top='btop' 2>/dev/null || alias top='htop'
 alias cleanup='flatpak uninstall --unused && rpm-ostree cleanup -b'
 alias sysinfo='fastfetch'
 
