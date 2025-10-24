@@ -1,4 +1,3 @@
-# Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
 COPY build_files /
 
@@ -11,8 +10,20 @@ RUN mkdir -p /etc/containers/registries.d && \
     printf 'docker:\n  ghcr.io/ctsdownloads/clarity-os:\n    use-sigstore-attachments: true\n' \
     > /etc/containers/registries.d/ghcr-ctsdownloads.yaml
 
-### Configure bootc to verify signatures automatically for updates
-COPY build_files/policy.json /etc/containers/policy.json
+### REMOVED: DO NOT COPY policy.json into the image - it blocks ISO builds
+### It will be installed on first boot by clarityos-enable-signed-updates.service
+# COPY build_files/policy.json /etc/containers/policy.json
+
+### Install First-Boot Signature Enablement Service
+### This runs once after installation to enable signature verification
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    mkdir -p /usr/libexec && \
+    cp /ctx/clarityos-enable-signed-updates.sh /usr/libexec/clarityos-enable-signed-updates.sh && \
+    chmod +x /usr/libexec/clarityos-enable-signed-updates.sh && \
+    mkdir -p /usr/lib/systemd/system && \
+    cp /ctx/clarityos-enable-signed-updates.service /usr/lib/systemd/system/clarityos-enable-signed-updates.service && \
+    systemctl enable clarityos-enable-signed-updates.service && \
+    echo "✓ Signature verification enablement service installed"
 
 ### COSMIC Desktop Installation
 ## base-main doesn't have Fedora repos enabled by default
@@ -97,20 +108,67 @@ RUN rpm-ostree install flatpak && \
     mkdir -p /var/lib/flatpak
 
 ### Create first-boot Flatpak installer script
-RUN mkdir -p /etc/skel/.config/autostart
+# Ensure all directories exist before writing files
+RUN mkdir -p /etc/skel/.config/autostart /usr/local/bin
 
-COPY build_files/clarityos-first-boot.sh /usr/bin/clarityos-first-boot.sh
-RUN chmod +x /usr/bin/clarityos-first-boot.sh
+RUN cat > /usr/local/bin/clarityos-first-boot.sh << 'SCRIPT'
+#!/bin/bash
+# ClarityOS First Boot Setup
 
-COPY build_files/clarityos-first-boot.desktop /etc/skel/.config/autostart/clarityos-first-boot.desktop
+# Add Flathub if not already added
+flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+
+# Install essential Flatpaks
+flatpak install -y --user flathub \
+    io.github.kolunmi.Bazaar \
+    org.libreoffice.LibreOffice \
+    org.gimp.GIMP \
+    org.videolan.VLC \
+    org.inkscape.Inkscape \
+    org.audacityteam.Audacity \
+    org.mozilla.Thunderbird \
+    com.github.tchx84.Flatseal
+
+# Remove this script after first run
+rm -f ~/.config/autostart/clarityos-first-boot.desktop
+SCRIPT
+
+RUN chmod +x /usr/local/bin/clarityos-first-boot.sh
+
+RUN cat > /etc/skel/.config/autostart/clarityos-first-boot.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=ClarityOS First Boot Setup
+Exec=/usr/local/bin/clarityos-first-boot.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+DESKTOP
 
 ### Create useful bash aliases for all users
-COPY build_files/clarityos-aliases.sh /tmp/clarityos-aliases.sh
-RUN cat /tmp/clarityos-aliases.sh >> /etc/skel/.bashrc && rm /tmp/clarityos-aliases.sh
+RUN cat >> /etc/skel/.bashrc << 'BASHRC'
+
+# ClarityOS Quality of Life Aliases
+alias ll='ls -lah --color=auto'
+alias update='rpm-ostree update'
+alias cleanup='flatpak uninstall --unused && rpm-ostree cleanup -b'
+alias sysinfo='fastfetch'
+
+BASHRC
 
 ### Configure COSMIC Dock - Pin Apps for New Users
 RUN mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1
-COPY build_files/favorites.json /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1/favorites
+
+RUN cat > /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1/favorites << 'EOF'
+[
+  "org.mozilla.firefox",
+  "com.system76.CosmicFiles",
+  "com.system76.CosmicEdit",
+  "com.system76.CosmicTerm",
+  "io.github.kolunmi.Bazaar",
+  "com.system76.CosmicSettings"
+]
+EOF
 
 ### [IM]MUTABLE /opt
 # RUN rm /opt && mkdir /opt
@@ -124,3 +182,9 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     
 ### LINTING
 RUN bootc container lint
+
+### Metadata
+LABEL org.opencontainers.image.title="ClarityOS"
+LABEL org.opencontainers.image.description="A custom Fedora-based OS with COSMIC desktop"
+LABEL org.opencontainers.image.version="42"
+LABEL io.artifacthub.package.readme-url="https://github.com/ctsdownloads/clarity-os/blob/main/README.md"
