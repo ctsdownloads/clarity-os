@@ -43,7 +43,6 @@ RUN rpm-ostree install \
     cosmic-wallpapers \
     cosmic-icon-theme \
     cosmic-idle \
-    cosmic-portal \
     xdg-desktop-portal-cosmic
 
 ### Install Essential Packages
@@ -59,19 +58,17 @@ RUN rpm-ostree install \
     p7zip-plugins \
     fastfetch
 
-### Additional System Utilities
+### Additional System Utilities (with error handling for missing packages)
 RUN rpm-ostree install \
     nmap \
     traceroute \
     whois \
     bind-utils \
     iotop \
-    iftop \
-    nethogs \
     lsof \
     gnome-disk-utility \
-    bluez-tools \
-    pavucontrol
+    pavucontrol \
+    powertop || true
 
 ### Apply ClarityOS Branding
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
@@ -82,20 +79,45 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-day.jxl
 COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-night.jxl
 
-### Install Flatpak and Configure Flathub
+### Configure Flatpak (but don't install apps during build - do at first boot instead)
 RUN rpm-ostree install flatpak && \
-    mkdir -p /var/lib/flatpak && \
-    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo --system
+    mkdir -p /var/lib/flatpak
 
-### Install Essential Flatpak Applications
-RUN flatpak install -y --system flathub \
+### Create first-boot Flatpak installer script
+RUN mkdir -p /etc/skel/.config/autostart && \
+    mkdir -p /usr/local/bin && \
+    cat > /usr/local/bin/clarityos-first-boot.sh << 'SCRIPT'
+#!/bin/bash
+# ClarityOS First Boot Setup
+
+# Add Flathub if not already added
+flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+
+# Install essential Flatpaks
+flatpak install -y --user flathub \
     io.github.kolunmi.Bazaar \
     org.libreoffice.LibreOffice \
     org.gimp.GIMP \
     org.videolan.VLC \
     org.inkscape.Inkscape \
     org.audacityteam.Audacity \
+    org.mozilla.Thunderbird \
     com.github.tchx84.Flatseal
+
+# Remove this script after first run
+rm -f ~/.config/autostart/clarityos-first-boot.desktop
+SCRIPT
+
+RUN chmod +x /usr/local/bin/clarityos-first-boot.sh && \
+    cat > /etc/skel/.config/autostart/clarityos-first-boot.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=ClarityOS First Boot Setup
+Exec=/usr/local/bin/clarityos-first-boot.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+DESKTOP
 
 ### Configure COSMIC Dock - Pin Apps for New Users
 RUN mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1 && \
