@@ -52,21 +52,16 @@ EOF
 ### Default Hostname
 echo "clarityos" > /etc/hostname
 
-### GRUB Distributor
-# This changes "Fedora" to "ClarityOS" in GRUB menu
-sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="ClarityOS"/' /etc/default/grub
-
-### Anaconda Installer Product Name
-# This changes the installer to say "ClarityOS" instead of "Fedora"
-if [ -f /etc/os-release.d/product ]; then
-    cat > /etc/os-release.d/product << 'EOF'
-NAME=ClarityOS
-VERSION=42
-EOF
+### GRUB Distributor (only if grub config exists)
+if [ -f /etc/default/grub ]; then
+    sed -i 's/GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="ClarityOS"/' /etc/default/grub
+else
+    # Create the file if it doesn't exist
+    mkdir -p /etc/default
+    echo 'GRUB_DISTRIBUTOR="ClarityOS"' > /etc/default/grub
 fi
 
 ### Remove Fedora branding from various locations
-# Remove Fedora-specific files that might show branding
 rm -f /etc/fedora-release 2>/dev/null || true
 rm -f /etc/system-release 2>/dev/null || true
 
