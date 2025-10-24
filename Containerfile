@@ -16,17 +16,41 @@ COPY build_files/policy.json /etc/containers/policy.json
 
 ### COSMIC Desktop Installation
 ## base-main doesn't have Fedora repos enabled by default
-## Add Fedora repos so we can install COSMIC packages
+## Add ALL necessary Fedora repos for COSMIC
 RUN curl -Lo /etc/yum.repos.d/fedora.repo \
     https://src.fedoraproject.org/rpms/fedora-repos/raw/f42/f/fedora.repo && \
     curl -Lo /etc/yum.repos.d/fedora-updates.repo \
-    https://src.fedoraproject.org/rpms/fedora-repos/raw/f42/f/fedora-updates.repo
+    https://src.fedoraproject.org/rpms/fedora-repos/raw/f42/f/fedora-updates.repo && \
+    curl -Lo /etc/yum.repos.d/fedora-updates-testing.repo \
+    https://src.fedoraproject.org/rpms/fedora-repos/raw/f42/f/fedora-updates-testing.repo
 
-## Install COSMIC desktop environment using official group
-## This replaces the individual package list and installs all COSMIC components
-RUN rpm-ostree install @cosmic-desktop-environment
+## Install COSMIC desktop environment - manual package list since group isn't available
+RUN rpm-ostree install \
+    cosmic-session \
+    cosmic-comp \
+    cosmic-greeter \
+    cosmic-panel \
+    cosmic-launcher \
+    cosmic-settings \
+    cosmic-settings-daemon \
+    cosmic-files \
+    cosmic-term \
+    cosmic-bg \
+    cosmic-applets \
+    cosmic-notifications \
+    cosmic-osd \
+    cosmic-workspaces \
+    cosmic-screenshot \
+    cosmic-app-library \
+    cosmic-edit \
+    cosmic-store \
+    cosmic-player \
+    cosmic-wallpapers \
+    cosmic-icon-theme \
+    cosmic-idle \
+    xdg-desktop-portal-cosmic
 
-### Install Essential Packages (FIXED - removed cups-openprinting, added cups)
+### Install Essential Packages
 RUN rpm-ostree install \
     cups \
     system-config-printer \
@@ -40,7 +64,7 @@ RUN rpm-ostree install \
     tmux \
     bash-completion
 
-### Install System Utilities (FIXED - removed powertop)
+### Install System Utilities
 RUN rpm-ostree install \
     nmap \
     traceroute \
