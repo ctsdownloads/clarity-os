@@ -97,10 +97,9 @@ RUN rpm-ostree install flatpak && \
     mkdir -p /var/lib/flatpak
 
 ### Create first-boot Flatpak installer script
-# Ensure all directories exist before writing files
-RUN mkdir -p /etc/skel/.config/autostart /usr/local/bin
+RUN mkdir -p /etc/skel/.config/autostart
 
-RUN cat > /usr/local/bin/clarityos-first-boot.sh << 'SCRIPT'
+RUN cat > /usr/bin/clarityos-first-boot.sh << 'SCRIPT'
 #!/bin/bash
 # ClarityOS First Boot Setup
 
@@ -122,13 +121,13 @@ flatpak install -y --user flathub \
 rm -f ~/.config/autostart/clarityos-first-boot.desktop
 SCRIPT
 
-RUN chmod +x /usr/local/bin/clarityos-first-boot.sh
+RUN chmod +x /usr/bin/clarityos-first-boot.sh
 
 RUN cat > /etc/skel/.config/autostart/clarityos-first-boot.desktop << 'DESKTOP'
 [Desktop Entry]
 Type=Application
 Name=ClarityOS First Boot Setup
-Exec=/usr/local/bin/clarityos-first-boot.sh
+Exec=/usr/bin/clarityos-first-boot.sh
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
