@@ -99,64 +99,18 @@ RUN rpm-ostree install flatpak && \
 ### Create first-boot Flatpak installer script
 RUN mkdir -p /etc/skel/.config/autostart
 
-RUN cat > /usr/bin/clarityos-first-boot.sh << 'SCRIPT'
-#!/bin/bash
-# ClarityOS First Boot Setup
-
-# Add Flathub if not already added
-flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
-
-# Install essential Flatpaks
-flatpak install -y --user flathub \
-    io.github.kolunmi.Bazaar \
-    org.libreoffice.LibreOffice \
-    org.gimp.GIMP \
-    org.videolan.VLC \
-    org.inkscape.Inkscape \
-    org.audacityteam.Audacity \
-    org.mozilla.Thunderbird \
-    com.github.tchx84.Flatseal
-
-# Remove this script after first run
-rm -f ~/.config/autostart/clarityos-first-boot.desktop
-SCRIPT
-
+COPY build_files/clarityos-first-boot.sh /usr/bin/clarityos-first-boot.sh
 RUN chmod +x /usr/bin/clarityos-first-boot.sh
 
-RUN cat > /etc/skel/.config/autostart/clarityos-first-boot.desktop << 'DESKTOP'
-[Desktop Entry]
-Type=Application
-Name=ClarityOS First Boot Setup
-Exec=/usr/bin/clarityos-first-boot.sh
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-DESKTOP
+COPY build_files/clarityos-first-boot.desktop /etc/skel/.config/autostart/clarityos-first-boot.desktop
 
 ### Create useful bash aliases for all users
-RUN cat >> /etc/skel/.bashrc << 'BASHRC'
-
-# ClarityOS Quality of Life Aliases
-alias ll='ls -lah --color=auto'
-alias update='rpm-ostree update'
-alias cleanup='flatpak uninstall --unused && rpm-ostree cleanup -b'
-alias sysinfo='fastfetch'
-
-BASHRC
+COPY build_files/clarityos-aliases.sh /tmp/clarityos-aliases.sh
+RUN cat /tmp/clarityos-aliases.sh >> /etc/skel/.bashrc && rm /tmp/clarityos-aliases.sh
 
 ### Configure COSMIC Dock - Pin Apps for New Users
 RUN mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1
-
-RUN cat > /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1/favorites << 'EOF'
-[
-  "org.mozilla.firefox",
-  "com.system76.CosmicFiles",
-  "com.system76.CosmicEdit",
-  "com.system76.CosmicTerm",
-  "io.github.kolunmi.Bazaar",
-  "com.system76.CosmicSettings"
-]
-EOF
+COPY build_files/favorites.json /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1/favorites
 
 ### [IM]MUTABLE /opt
 # RUN rm /opt && mkdir /opt

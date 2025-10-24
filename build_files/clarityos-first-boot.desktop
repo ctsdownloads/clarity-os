@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=ClarityOS First Boot Setup
+Exec=/usr/bin/clarityos-first-boot.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
