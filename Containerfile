@@ -11,6 +11,27 @@ RUN mkdir -p /etc/containers/registries.d && \
     printf 'docker:\n  ghcr.io/ctsdownloads/clarity-os:\n    use-sigstore-attachments: true\n' \
     > /etc/containers/registries.d/ghcr-ctsdownloads.yaml
 
+### Configure bootc to verify signatures automatically for updates
+RUN mkdir -p /etc/containers && \
+    cat > /etc/containers/policy.json << 'POLICY'
+{
+  "default": [{"type": "reject"}],
+  "transports": {
+    "docker": {
+      "ghcr.io/ctsdownloads/clarity-os": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/clarity-os.pub"
+        }
+      ]
+    },
+    "docker-daemon": {
+      "": [{"type": "insecureAcceptAnything"}]
+    }
+  }
+}
+POLICY
+
 ### COSMIC Desktop Installation
 ## base-main doesn't have Fedora repos enabled by default
 ## Add Fedora repos so we can install COSMIC packages
@@ -58,7 +79,7 @@ RUN rpm-ostree install \
     p7zip-plugins \
     fastfetch
 
-### Additional System Utilities (with error handling for missing packages)
+### Additional System Utilities
 RUN rpm-ostree install \
     nmap \
     traceroute \
@@ -68,7 +89,15 @@ RUN rpm-ostree install \
     lsof \
     gnome-disk-utility \
     pavucontrol \
-    powertop || true
+    powertop
+
+### Quality of Life Utilities (automatically skips if already installed)
+RUN rpm-ostree install \
+    bat \
+    eza \
+    tmux \
+    tree \
+    bash-completion
 
 ### Apply ClarityOS Branding
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
@@ -79,13 +108,12 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-day.jxl
 COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-night.jxl
 
-### Configure Flatpak (but don't install apps during build - do at first boot instead)
+### Configure Flatpak
 RUN rpm-ostree install flatpak && \
     mkdir -p /var/lib/flatpak
 
 ### Create first-boot Flatpak installer script
 RUN mkdir -p /etc/skel/.config/autostart && \
-    mkdir -p /usr/local/bin && \
     cat > /usr/local/bin/clarityos-first-boot.sh << 'SCRIPT'
 #!/bin/bash
 # ClarityOS First Boot Setup
@@ -118,6 +146,20 @@ Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
 DESKTOP
+
+### Create useful bash aliases for all users
+RUN cat >> /etc/skel/.bashrc << 'BASHRC'
+
+# ClarityOS Quality of Life Aliases
+alias ll='ls -lah --color=auto'
+alias update='rpm-ostree update'
+alias ls='eza --icons' 2>/dev/null || alias ls='ls --color=auto'
+alias cat='bat' 2>/dev/null || alias cat='cat'
+alias top='btop' 2>/dev/null || alias top='htop'
+alias cleanup='flatpak uninstall --unused && rpm-ostree cleanup -b'
+alias sysinfo='fastfetch'
+
+BASHRC
 
 ### Configure COSMIC Dock - Pin Apps for New Users
 RUN mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1 && \
