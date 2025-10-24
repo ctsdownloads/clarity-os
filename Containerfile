@@ -5,9 +5,6 @@ COPY build_files /
 # Base Image - ublue base-main + COSMIC from Fedora
 FROM ghcr.io/ublue-os/base-main:42
 
-# Build argument for kernel variant
-ARG KERNEL_VARIANT="latest"
-
 ### Setup Signature Verification
 COPY cosign.pub /etc/pki/containers/clarity-os.pub
 RUN mkdir -p /etc/containers/registries.d && \
@@ -46,16 +43,11 @@ RUN rpm-ostree install \
     cosmic-icon-theme \
     xdg-desktop-portal-cosmic
 
-### Kernel Variant Selection
-## Pin to stable GTS kernel if requested
-RUN if [ "$KERNEL_VARIANT" = "gts" ]; then \
-      rpm-ostree override replace \
-        kernel-6.16.12-100.fc41 \
-        kernel-core-6.16.12-100.fc41 \
-        kernel-modules-6.16.12-100.fc41 \
-        kernel-modules-core-6.16.12-100.fc41 \
-        kernel-modules-extra-6.16.12-100.fc41; \
-    fi
+### Custom Default Wallpaper
+COPY build_files/wallpapers/clarity-default.jpg /usr/share/backgrounds/clarity-default.jpg
+RUN mkdir -p /etc/skel/.config/cosmic && \
+    printf '(\n    output: "all",\n    source: Path("/usr/share/backgrounds/clarity-default.jpg"),\n    filter_by_theme: false,\n)\n' \
+    > /etc/skel/.config/cosmic/com.system76.CosmicBackground.ron
 
 ### [IM]MUTABLE /opt
 # RUN rm /opt && mkdir /opt
