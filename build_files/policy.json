@@ -1,0 +1,24 @@
+{
+  "default": [
+    {
+      "type": "insecureAcceptAnything"
+    }
+  ],
+  "transports": {
+    "docker": {
+      "ghcr.io/ctsdownloads/clarity-os": [
+        {
+          "type": "signedBy",
+          "keyPath": "/etc/pki/containers/clarity-os.pub"
+        }
+      ]
+    },
+    "containers-storage": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    }
+  }
+}
