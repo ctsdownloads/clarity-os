@@ -85,6 +85,9 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/branding.sh
 
 ### Custom Default Wallpaper - Dark wallpaper for both themes
+# Ensure target directory exists first
+RUN mkdir -p /usr/share/backgrounds/f42/default
+
 # Use dark wallpaper for both day and night since COSMIC doesn't switch automatically
 COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-day.jxl
 COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-night.jxl
@@ -94,8 +97,10 @@ RUN rpm-ostree install flatpak && \
     mkdir -p /var/lib/flatpak
 
 ### Create first-boot Flatpak installer script
-RUN mkdir -p /etc/skel/.config/autostart && \
-    cat > /usr/local/bin/clarityos-first-boot.sh << 'SCRIPT'
+# Ensure all directories exist before writing files
+RUN mkdir -p /etc/skel/.config/autostart /usr/local/bin
+
+RUN cat > /usr/local/bin/clarityos-first-boot.sh << 'SCRIPT'
 #!/bin/bash
 # ClarityOS First Boot Setup
 
@@ -117,8 +122,9 @@ flatpak install -y --user flathub \
 rm -f ~/.config/autostart/clarityos-first-boot.desktop
 SCRIPT
 
-RUN chmod +x /usr/local/bin/clarityos-first-boot.sh && \
-    cat > /etc/skel/.config/autostart/clarityos-first-boot.desktop << 'DESKTOP'
+RUN chmod +x /usr/local/bin/clarityos-first-boot.sh
+
+RUN cat > /etc/skel/.config/autostart/clarityos-first-boot.desktop << 'DESKTOP'
 [Desktop Entry]
 Type=Application
 Name=ClarityOS First Boot Setup
@@ -140,8 +146,9 @@ alias sysinfo='fastfetch'
 BASHRC
 
 ### Configure COSMIC Dock - Pin Apps for New Users
-RUN mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1 && \
-    cat > /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1/favorites << 'EOF'
+RUN mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1
+
+RUN cat > /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1/favorites << 'EOF'
 [
   "org.mozilla.firefox",
   "com.system76.CosmicFiles",
