@@ -12,8 +12,9 @@ RUN mkdir -p /etc/containers/registries.d && \
     > /etc/containers/registries.d/ghcr-ctsdownloads.yaml
 
 ### Configure bootc to verify signatures automatically for updates
-RUN mkdir -p /etc/containers && \
-    cat > /etc/containers/policy.json << 'POLICY'
+RUN mkdir -p /etc/containers
+
+RUN cat > /etc/containers/policy.json << 'EOF'
 {
   "default": [{"type": "reject"}],
   "transports": {
@@ -30,7 +31,7 @@ RUN mkdir -p /etc/containers && \
     }
   }
 }
-POLICY
+EOF
 
 ### COSMIC Desktop Installation
 ## base-main doesn't have Fedora repos enabled by default
