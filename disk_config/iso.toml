@@ -1,10 +1,9 @@
 [customizations.installer.kickstart]
 contents = """
 %post
-bootc switch --mutate-in-place --transport registry ghcr.io/ublue-os/image-template:latest
+bootc switch --mutate-in-place --transport registry ghcr.io/ctsdownloads/clarity-os:latest
 %end
 """
-
 [customizations.installer.modules]
 enable = [
   "org.fedoraproject.Anaconda.Modules.Storage",
@@ -17,7 +16,6 @@ enable = [
   "org.fedoraproject.Anaconda.Modules.Localization",
   "org.fedoraproject.Anaconda.Modules.Payloads"
 ]
-
 disable = [
   "org.fedoraproject.Anaconda.Modules.Subscription"
 ]
