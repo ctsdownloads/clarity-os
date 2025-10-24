@@ -22,7 +22,7 @@ RUN curl -Lo /etc/yum.repos.d/fedora.repo \
     curl -Lo /etc/yum.repos.d/fedora-updates.repo \
     https://src.fedoraproject.org/rpms/fedora-repos/raw/f42/f/fedora-updates.repo
 
-## Install COSMIC desktop environment (with graceful failure handling)
+## Install COSMIC desktop environment
 RUN rpm-ostree install \
     cosmic-session \
     cosmic-comp \
@@ -46,42 +46,33 @@ RUN rpm-ostree install \
     cosmic-wallpapers \
     cosmic-icon-theme \
     cosmic-idle \
-    xdg-desktop-portal-cosmic \
-    || echo "Some COSMIC packages failed to install, continuing..."
+    xdg-desktop-portal-cosmic
 
-### Install Essential Packages (critical - must succeed)
+### Install Essential Packages (verified to exist in Fedora 42)
 RUN rpm-ostree install \
-    cups \
+    cups-openprinting \
     system-config-printer \
     fwupd \
     vim \
     nano \
-    fastfetch
-
-### Install Archive Tools (with error handling)
-RUN rpm-ostree install \
+    fastfetch \
     unzip \
     zip \
-    p7zip \
-    p7zip-plugins \
-    || echo "Some archive tools failed, continuing..."
+    tree \
+    tmux \
+    bash-completion
 
-### Install System Utilities (optional - graceful failure)
-RUN rpm-ostree install nmap || true
-RUN rpm-ostree install traceroute || true
-RUN rpm-ostree install whois || true
-RUN rpm-ostree install bind-utils || true
-RUN rpm-ostree install iotop || true
-RUN rpm-ostree install lsof || true
-RUN rpm-ostree install gnome-disk-utility || true
-RUN rpm-ostree install pavucontrol || true
-RUN rpm-ostree install powertop || true
-
-### Install QoL Utilities (optional - graceful failure)
-RUN rpm-ostree install bat || true
-RUN rpm-ostree install tmux || true
-RUN rpm-ostree install tree || true
-RUN rpm-ostree install bash-completion || true
+### Install System Utilities (verified in Fedora repos)
+RUN rpm-ostree install \
+    nmap \
+    traceroute \
+    whois \
+    bind-utils \
+    iotop \
+    lsof \
+    gnome-disk-utility \
+    pavucontrol \
+    powertop
 
 ### Apply ClarityOS Branding
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
