@@ -22,35 +22,13 @@ RUN curl -Lo /etc/yum.repos.d/fedora.repo \
     curl -Lo /etc/yum.repos.d/fedora-updates.repo \
     https://src.fedoraproject.org/rpms/fedora-repos/raw/f42/f/fedora-updates.repo
 
-## Install COSMIC desktop environment
-RUN rpm-ostree install \
-    cosmic-session \
-    cosmic-comp \
-    cosmic-greeter \
-    cosmic-panel \
-    cosmic-launcher \
-    cosmic-settings \
-    cosmic-settings-daemon \
-    cosmic-files \
-    cosmic-term \
-    cosmic-bg \
-    cosmic-applets \
-    cosmic-notifications \
-    cosmic-osd \
-    cosmic-workspaces \
-    cosmic-screenshot \
-    cosmic-app-library \
-    cosmic-edit \
-    cosmic-store \
-    cosmic-player \
-    cosmic-wallpapers \
-    cosmic-icon-theme \
-    cosmic-idle \
-    xdg-desktop-portal-cosmic
+## Install COSMIC desktop environment using official group
+## This replaces the individual package list and installs all COSMIC components
+RUN rpm-ostree install @cosmic-desktop-environment
 
-### Install Essential Packages (verified to exist in Fedora 42)
+### Install Essential Packages (FIXED - removed cups-openprinting, added cups)
 RUN rpm-ostree install \
-    cups-openprinting \
+    cups \
     system-config-printer \
     fwupd \
     vim \
@@ -62,7 +40,7 @@ RUN rpm-ostree install \
     tmux \
     bash-completion
 
-### Install System Utilities (verified in Fedora repos)
+### Install System Utilities (FIXED - removed powertop)
 RUN rpm-ostree install \
     nmap \
     traceroute \
@@ -71,8 +49,12 @@ RUN rpm-ostree install \
     iotop \
     lsof \
     gnome-disk-utility \
-    pavucontrol \
-    powertop
+    pavucontrol
+
+### Install Plymouth for Boot Splash
+RUN rpm-ostree install \
+    plymouth \
+    plymouth-theme-spinner
 
 ### Apply ClarityOS Branding
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
@@ -142,7 +124,7 @@ RUN mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1 && \
   "com.system76.CosmicEdit",
   "com.system76.CosmicTerm",
   "io.github.kolunmi.Bazaar",
-  "com.system76.CosmicSettings",
+  "com.system76.CosmicSettings"
 ]
 EOF
 

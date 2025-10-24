@@ -35,7 +35,6 @@ ln -sf /usr/lib/os-release /etc/os-release
 ### Issue (Pre-login banner)
 cat > /etc/issue << 'EOF'
 ClarityOS \r (\l)
-
 EOF
 
 ### Issue.net (Network login banner)
@@ -46,7 +45,6 @@ EOF
 ### MOTD (Message of the day)
 cat > /etc/motd << 'EOF'
 Welcome to ClarityOS!
-
 EOF
 
 ### Default Hostname
@@ -70,14 +68,26 @@ echo "ClarityOS release 42 (COSMIC)" > /etc/clarityos-release
 ln -sf /etc/clarityos-release /etc/system-release
 
 ### Plymouth Boot Splash Branding
-# Directly overwrite the Fedora watermark with ClarityOS logo
+# Ensure Plymouth spinner theme directory exists
+mkdir -p /usr/share/plymouth/themes/spinner
+
+# Replace the Fedora watermark with ClarityOS logo
+# Note: The script is mounted at /ctx when running via Containerfile
 if [ -f /ctx/branding/clarity-logo.png ]; then
     cp /ctx/branding/clarity-logo.png /usr/share/plymouth/themes/spinner/watermark.png
-    echo "Plymouth Fedora logo replaced with ClarityOS logo"
+    echo "✅ Plymouth Fedora logo replaced with ClarityOS logo"
+elif [ -f /ctx/clarity-logo.png ]; then
+    # Alternative path in case it's in root of build_files
+    cp /ctx/clarity-logo.png /usr/share/plymouth/themes/spinner/watermark.png
+    echo "✅ Plymouth Fedora logo replaced with ClarityOS logo"
 else
-    # If no logo provided, just remove the Fedora logo entirely
+    # If no logo provided, remove the Fedora logo to show a clean boot
     rm -f /usr/share/plymouth/themes/spinner/watermark.png
-    echo "Fedora Plymouth logo removed"
+    echo "⚠️  No clarity-logo.png found - Fedora Plymouth logo removed (clean boot)"
+    echo "    Place logo at: build_files/branding/clarity-logo.png"
 fi
 
-echo "ClarityOS branding applied successfully!"
+# Set Plymouth theme to spinner (which uses our watermark)
+plymouth-set-default-theme spinner || echo "⚠️  Plymouth theme setting skipped (will apply at runtime)"
+
+echo "✅ ClarityOS branding applied successfully!"
