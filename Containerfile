@@ -3,7 +3,7 @@ FROM scratch AS ctx
 COPY build_files /
 
 # Base Image - ublue base-main (minimal, no desktop) + COSMIC
-FROM ghcr.io/ublue-os/base-main:42
+FROM ghcr.io/ublue-os/base-main:latest
 
 ## Other possible base images include:
 # FROM ghcr.io/ublue-os/bazzite:latest
