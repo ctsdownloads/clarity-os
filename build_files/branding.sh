@@ -69,4 +69,15 @@ rm -f /etc/system-release 2>/dev/null || true
 echo "ClarityOS release 42 (COSMIC)" > /etc/clarityos-release
 ln -sf /etc/clarityos-release /etc/system-release
 
+### Plymouth Boot Splash Branding
+# Directly overwrite the Fedora watermark with ClarityOS logo
+if [ -f /ctx/branding/clarity-logo.png ]; then
+    cp /ctx/branding/clarity-logo.png /usr/share/plymouth/themes/spinner/watermark.png
+    echo "Plymouth Fedora logo replaced with ClarityOS logo"
+else
+    # If no logo provided, just remove the Fedora logo entirely
+    rm -f /usr/share/plymouth/themes/spinner/watermark.png
+    echo "Fedora Plymouth logo removed"
+fi
+
 echo "ClarityOS branding applied successfully!"
