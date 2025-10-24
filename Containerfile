@@ -43,8 +43,19 @@ RUN rpm-ostree install \
     cosmic-icon-theme \
     xdg-desktop-portal-cosmic
 
+### Apply ClarityOS Branding
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    /ctx/branding.sh
+
 ### Custom Default Wallpaper
 COPY build_files/wallpapers/clarity-default.jpg /usr/share/backgrounds/clarity-default.jpg
+
+# Replace Fedora default wallpaper symlinks to point to ClarityOS wallpaper
+RUN rm -f /usr/share/backgrounds/default.jxl /usr/share/backgrounds/default-dark.jxl && \
+    ln -s /usr/share/backgrounds/clarity-default.jpg /usr/share/backgrounds/default.jxl && \
+    ln -s /usr/share/backgrounds/clarity-default.jpg /usr/share/backgrounds/default-dark.jxl
+
+# Also set it for new users via skel (belt and suspenders approach)
 RUN mkdir -p /etc/skel/.config/cosmic && \
     printf '(\n    output: "all",\n    source: Path("/usr/share/backgrounds/clarity-default.jpg"),\n    filter_by_theme: false,\n)\n' \
     > /etc/skel/.config/cosmic/com.system76.CosmicBackground.ron
