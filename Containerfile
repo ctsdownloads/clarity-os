@@ -19,7 +19,7 @@ RUN curl -Lo /etc/yum.repos.d/fedora.repo \
     curl -Lo /etc/yum.repos.d/fedora-updates.repo \
     https://src.fedoraproject.org/rpms/fedora-repos/raw/f42/f/fedora-updates.repo
 
-## Install complete COSMIC desktop environment from Fedora updates repo
+## Install COMPLETE COSMIC desktop environment from Fedora repos
 RUN rpm-ostree install \
     cosmic-session \
     cosmic-comp \
@@ -39,9 +39,39 @@ RUN rpm-ostree install \
     cosmic-app-library \
     cosmic-edit \
     cosmic-store \
+    cosmic-player \
     cosmic-wallpapers \
     cosmic-icon-theme \
+    cosmic-idle \
+    cosmic-portal \
     xdg-desktop-portal-cosmic
+
+### Install Essential Packages
+RUN rpm-ostree install \
+    cups \
+    system-config-printer \
+    fwupd \
+    vim \
+    nano \
+    unzip \
+    zip \
+    p7zip \
+    p7zip-plugins \
+    fastfetch
+
+### Additional System Utilities
+RUN rpm-ostree install \
+    nmap \
+    traceroute \
+    whois \
+    bind-utils \
+    iotop \
+    iftop \
+    nethogs \
+    lsof \
+    gnome-disk-utility \
+    bluez-tools \
+    pavucontrol
 
 ### Apply ClarityOS Branding
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
@@ -51,6 +81,34 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # Use dark wallpaper for both day and night since COSMIC doesn't switch automatically
 COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-day.jxl
 COPY build_files/wallpapers/default-dark.jxl /usr/share/backgrounds/f42/default/f42-01-night.jxl
+
+### Install Flatpak and Configure Flathub
+RUN rpm-ostree install flatpak && \
+    mkdir -p /var/lib/flatpak && \
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo --system
+
+### Install Essential Flatpak Applications
+RUN flatpak install -y --system flathub \
+    io.github.kolunmi.Bazaar \
+    org.libreoffice.LibreOffice \
+    org.gimp.GIMP \
+    org.videolan.VLC \
+    org.inkscape.Inkscape \
+    org.audacityteam.Audacity \
+    com.github.tchx84.Flatseal
+
+### Configure COSMIC Dock - Pin Apps for New Users
+RUN mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1 && \
+    cat > /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1/favorites << 'EOF'
+[
+  "org.mozilla.firefox",
+  "com.system76.CosmicFiles",
+  "com.system76.CosmicEdit",
+  "com.system76.CosmicTerm",
+  "io.github.kolunmi.Bazaar",
+  "com.system76.CosmicSettings",
+]
+EOF
 
 ### [IM]MUTABLE /opt
 # RUN rm /opt && mkdir /opt
