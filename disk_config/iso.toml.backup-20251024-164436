@@ -1,0 +1,33 @@
+name = "clarityos"
+version = "42"
+
+[customizations]
+installation_device = "/dev/vda"
+
+[customizations.installer]
+unattended = false
+
+[customizations.installer.kickstart]
+contents = """
+%post
+# Install using unverified registry (Bazzite-style approach)
+# This avoids signature verification during initial installation
+bootc switch --mutate-in-place --transport registry ghcr.io/ctsdownloads/clarity-os:latest
+%end
+"""
+
+[customizations.installer.modules]
+enable = [
+  "org.fedoraproject.Anaconda.Modules.Storage",
+  "org.fedoraproject.Anaconda.Modules.Runtime",
+  "org.fedoraproject.Anaconda.Modules.Network",
+  "org.fedoraproject.Anaconda.Modules.Security",
+  "org.fedoraproject.Anaconda.Modules.Services",
+  "org.fedoraproject.Anaconda.Modules.Users",
+  "org.fedoraproject.Anaconda.Modules.Timezone",
+  "org.fedoraproject.Anaconda.Modules.Localization",
+  "org.fedoraproject.Anaconda.Modules.Payloads"
+]
+disable = [
+  "org.fedoraproject.Anaconda.Modules.Subscription"
+]

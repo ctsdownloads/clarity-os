@@ -1,0 +1,15 @@
+[Unit]
+Description=ClarityOS Enable Signed Updates (First Boot)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/clarityos/.signed-updates-enabled
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/clarityos-enable-signed-updates.sh
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

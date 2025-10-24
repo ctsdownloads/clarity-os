@@ -1,16 +1,24 @@
 {
-  "default": [{"type": "reject"}],
+  "default": [
+    {
+      "type": "insecureAcceptAnything"
+    }
+  ],
   "transports": {
     "docker": {
       "ghcr.io/ctsdownloads/clarity-os": [
         {
-          "type": "sigstoreSigned",
+          "type": "signedBy",
           "keyPath": "/etc/pki/containers/clarity-os.pub"
         }
       ]
     },
-    "docker-daemon": {
-      "": [{"type": "insecureAcceptAnything"}]
+    "containers-storage": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
     }
   }
 }
